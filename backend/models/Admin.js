@@ -1,0 +1,32 @@
+// Admin ka schema - sirf ek hi admin hoga
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const adminSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6,
+  },
+}, { timestamps: true });
+
+// Password save karne se pehle hash kar do
+adminSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// Login ke time password match karo
+adminSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+module.exports = mongoose.model('Admin', adminSchema);
